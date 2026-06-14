@@ -1,0 +1,6 @@
+{
+  "name": "ثانوية تفاعلية",
+  "description": "منصة تعليمية تفاعلية ومبتكرة لطلاب الثانوية العامة المصرية تعتمد على الجيمفيكيشن والخرائط الذهنية والمحاكيات الفيزيائية لتجعل المذاكرة مغامرة ممتعة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
