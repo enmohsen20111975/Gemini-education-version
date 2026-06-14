@@ -33,6 +33,7 @@ import {
   ListTodo
 } from 'lucide-react';
 import { ALL_ACADEMIC_YEARS, SpecializationID } from '../lib/data';
+import { LION_ARENAS, LION_QUESTIONS, LionQuestion, LionArena } from '../lib/data/lionJourney';
 
 export default function ThanaweyaInteractiveHub() {
   // Navigation Selection States
@@ -40,6 +41,79 @@ export default function ThanaweyaInteractiveHub() {
   const [selectedSpecId, setSelectedSpecId] = useState<SpecializationID>('scientific_science');
   const [selectedTerm, setSelectedTerm] = useState<1 | 2>(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('g12_physics');
+
+  // الوضع الحالي للدراسة: تصفح المنهج والمحاكيات أم خوض رحلة الأسد الشرس للامتحانات
+  const [studyMode, setStudyMode] = useState<'syllabus' | 'lion_journey'>('syllabus');
+  // العرين الكروي المختار لرحلة الأسد الشرس
+  const [selectedLionArenaId, setSelectedLionArenaId] = useState<string>('arena_g12_physics_kirchhoff');
+  // إجابات رحلة الأسد الشرس
+  const [lionAnswers, setLionAnswers] = useState<Record<string, number>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lion_answers');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return {};
+  });
+  const [lionRevealed, setLionRevealed] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lion_revealed');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return {};
+  });
+
+  // قائمة مهام رحلة الأسد الشرس (Lion Journey Checklist) الخاصة ببنوك امتحانات الثانوية المكررة والتركات
+  const [lionTodos, setLionTodos] = useState<{ id: string; text: string; completed: boolean; arenaId: string }[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('lion_todos');
+      if (saved) {
+        try { return JSON.parse(saved); } catch (e) { console.error(e); }
+      }
+    }
+    return [
+      { id: 'l1', text: 'افتراس أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
+      { id: 'l2', text: 'كسر روابط الكربون وإتقان ماركونيكوف والكيمياء العضوية الأليفاتية 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
+      { id: 'l3', text: 'فك ألغاز الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
+      { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية المندفعة بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
+      { id: 'l5', text: 'السيطرة على التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
+      { id: 'l6', text: 'حل تريكات صيغ الأبعاد وقذف المقذوفات بزاوية 45 درجة لأولى ثانوي ⚡', completed: false, arenaId: 'arena_g10_physics' }
+    ];
+  });
+
+  const saveLionAnswers = (newAns: Record<string, number>) => {
+    setLionAnswers(newAns);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lion_answers', JSON.stringify(newAns));
+    }
+  };
+
+  const saveLionRevealed = (newRev: Record<string, boolean>) => {
+    setLionRevealed(newRev);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lion_revealed', JSON.stringify(newRev));
+    }
+  };
+
+  const saveLionTodos = (newTodos: typeof lionTodos) => {
+    setLionTodos(newTodos);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('lion_todos', JSON.stringify(newTodos));
+    }
+  };
+
+  const toggleLionTodo = (id: string) => {
+    const updated = lionTodos.map(t => {
+      if (t.id === id) {
+        return { ...t, completed: !t.completed };
+      }
+      return t;
+    });
+    saveLionTodos(updated);
+  };
   
   // قائمة المهام لتعبئة المواد (Todo List) مع الحفظ التلقائي في المتصفح
   const [todos, setTodos] = useState<{ id: string; text: string; completed: boolean; category: string }[]>(() => {
@@ -296,8 +370,54 @@ export default function ThanaweyaInteractiveHub() {
         </div>
       </header>
 
-      {/* CORE TIMELINE LEVEL & ACADEMIC YEAR PILOT */}
-      <section className="bg-slate-900/80 border-b border-slate-800 py-4 px-4 shadow-md" id="academic-timeline-pills">
+      {/* MODE CONTROLLER SLOT */}
+      <section className="bg-[#0F172A] border-b border-slate-800 py-3.5 px-4 sticky top-20 z-30 shadow-lg shadow-black/20" id="study-mode-controller">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <div className="text-right">
+              <p className="text-[11px] font-black text-amber-400">اختر مسارك التعليمي المفضل:</p>
+              <p className="text-[10px] text-slate-400 mt-0.5">تنقل بين الشرح التفاعلي والمحاكيات أو مغامرة بنك الأسئلة الشاملة للأسد الشرس</p>
+            </div>
+          </div>
+
+          <div className="flex bg-slate-900 border border-slate-850 p-1 rounded-2xl w-full sm:w-auto relative">
+            <button
+              onClick={() => setStudyMode('syllabus')}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                studyMode === 'syllabus'
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 scale-102 border border-blue-400/20'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-850/60'
+              }`}
+            >
+              <span className="text-sm">🏫</span>
+              <span>بوابة الشرح التفاعلي والمحاكيات</span>
+            </button>
+            
+            <button
+              onClick={() => setStudyMode('lion_journey')}
+              className={`flex-1 sm:flex-none px-6 py-2 rounded-xl text-xs font-black transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                studyMode === 'lion_journey'
+                  ? 'bg-gradient-to-r from-amber-500 to-rose-600 text-white shadow-lg shadow-rose-500/20 scale-102 border border-amber-400/20'
+                  : 'text-slate-450 hover:text-slate-200 hover:bg-slate-850/60'
+              }`}
+            >
+              <span className="text-sm">🦁</span>
+              <span className="relative">
+                رحلة الأسد الشرس للامتحانات
+                <span className="absolute -top-3.5 -left-4 inline-block text-[8px] bg-red-500 text-white font-extrabold px-1 rounded-full scale-90">جديد</span>
+              </span>
+            </button>
+          </div>
+
+        </div>
+      </section>
+
+      {studyMode === 'syllabus' ? (
+        <>
+          {/* CORE TIMELINE LEVEL & ACADEMIC YEAR PILOT */}
+          <section className="bg-slate-900/80 border-b border-slate-800 py-4 px-4 shadow-md" id="academic-timeline-pills">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Level 1: Year selection switcher */}
@@ -1623,6 +1743,466 @@ export default function ThanaweyaInteractiveHub() {
         </section>
 
       </main>
+    </>
+  ) : (
+    <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col gap-6" id="lion-journey-main-grid" dir="rtl">
+      
+      {/* Dynamic Lion Hero Section */}
+      <section className="bg-gradient-to-r from-amber-500/10 via-rose-500/5 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row justify-between items-center gap-6 shadow-xl relative overflow-hidden">
+        
+        {/* Visual background decor */}
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-amber-500/2 animate-pulse filter blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 rounded-full bg-rose-500/2 animate-pulse filter blur-3xl pointer-events-none" />
+
+        <div className="text-right flex-1">
+          <div className="flex items-center gap-2.5 flex-wrap justify-start">
+            <span className="text-2xl animate-bounce">🦁</span>
+            <span className="text-xs font-black bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">
+              معسكر الأسد الشرس للامتحانات والتركات
+            </span>
+            <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full">
+              المادة العلمية الرسمية 🇪🇬
+            </span>
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-white mt-3 leading-tight">
+            رحلة زئير الأسد: بنك الأسئلة الملحمي ونماذج الإجابة الفولاذية
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+            مذاكرة تفاعلية تفرتك أصعب تركات الفيزياء، الكيمياء، الأحياء، الجيولوجيا، والرياضيات! 
+            كل سؤال محلول بنموذج إجابة تفصيلي بالعامية المصرية لتبسيط الفهم 100% بدون أي استخدام خارجي للذكاء الاصطناعي لضمان التحصيل المستقل والفوري الخالي من الهلاوس!
+          </p>
+        </div>
+
+        {/* Quick Stats Panel */}
+        <div className="grid grid-cols-2 gap-3 shrink-0 w-full md:w-auto min-w-[280px]">
+          <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🏆 رصيد الـ XP الكلي</span>
+            <span className="text-sm font-mono font-black text-amber-400">{totalXP} XP</span>
+          </div>
+          <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🏁 العرائن المفتوحة</span>
+            <span className="text-sm font-black text-emerald-400">
+              {LION_ARENAS.filter(a => {
+                const aqs = LION_QUESTIONS.filter(q => q.arenaId === a.id);
+                return aqs.length > 0 && aqs.every(q => lionRevealed[q.id]);
+              }).length} / 6
+            </span>
+          </div>
+          <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🎯 أسئلة تم افتراسها</span>
+            <span className="text-sm font-mono font-black text-blue-400">
+              {Object.keys(lionAnswers).length} / {LION_QUESTIONS.length}
+            </span>
+          </div>
+          <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🦁 مستوى زئيرك</span>
+            <span className="text-xs font-black text-rose-400">
+              {Object.keys(lionAnswers).length >= 15 ? 'أسد مزمجر 🔥' : Object.keys(lionAnswers).length >= 5 ? 'شبل متمرس 🐾' : 'شبل مبتدئ 🍼'}
+            </span>
+          </div>
+        </div>
+
+      </section>
+
+      {/* Grid Layout containing: Left (Todos & achievements) / Right (Arenas list & Selected questions booklet) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full text-right" dir="rtl">
+        
+        {/* LEFT COLUMN: QUEST TASKS/CHECKLISTS & REWARDS */}
+        <aside className="lg:col-span-4 flex flex-col gap-5">
+          
+          {/* Reset All Stats Button */}
+          <button
+            onClick={() => {
+              if (confirm('هل أنت متأكد من تصفير وإعادة تشغيل رحلة الأسد الشرس بالكامل؟')) {
+                saveLionAnswers({});
+                saveLionRevealed({});
+                setLionTodos([
+                  { id: 'l1', text: 'افتراس أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
+                  { id: 'l2', text: 'كسر روابط الكربون وإتقان ماركونيكوف والكيمياء العضوية الأليفاتية 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
+                  { id: 'l3', text: 'فك ألغاز الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
+                  { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية المندفعة بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
+                  { id: 'l5', text: 'السيطرة على التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
+                  { id: 'l6', text: 'حل تريكات صيغ الأبعاد وقذف المقذوفات بزاوية 45 درجة لأولى ثانوي ⚡', completed: false, arenaId: 'arena_g10_physics' }
+                ]);
+                localStorage.removeItem('lion_answers');
+                localStorage.removeItem('lion_revealed');
+                localStorage.removeItem('lion_todos');
+              }
+            }}
+            className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-red-950/30 text-rose-400 hover:text-red-300 border border-slate-800 hover:border-red-900/40 text-[11px] font-black transition-all flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>إعادة تصفير رحلة الأسد بالكامل 🔄</span>
+          </button>
+
+          {/* Lion Quest Achievements Locker */}
+          <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl shadow-lg text-right">
+            <h3 className="text-xs font-black text-slate-105 mb-3 border-b border-slate-800/80 pb-2 flex items-center justify-start gap-2">
+              <span>🥇</span>
+              <span>غنائم وجوائز الأسد المفتوحة:</span>
+            </h3>
+            
+            <div className="space-y-2.5">
+              {LION_ARENAS.map(arena => {
+                const aqs = LION_QUESTIONS.filter(q => q.arenaId === arena.id);
+                const completed = aqs.length > 0 && aqs.every(q => lionRevealed[q.id]);
+                const correctAnswersCount = aqs.filter(q => lionAnswers[q.id] === q.correctIndex).length;
+                
+                return (
+                  <div 
+                    key={arena.id}
+                    className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-3 text-right ${
+                      completed 
+                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-300 shadow-sm' 
+                        : 'bg-slate-950/20 border-slate-850 text-slate-500 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 text-right">
+                      <span className="text-xl leading-none">{completed ? '👑' : '🔒'}</span>
+                      <div className="text-right">
+                        <h4 className="text-[11px] font-black leading-none text-slate-100">{arena.title}</h4>
+                        <span className="text-[9px] text-slate-400 mt-1 block">
+                          {completed ? `تم الافتراس بالكامل بنسبة صح ${Math.round((correctAnswersCount/aqs.length)*100)}%` : 'قيد الانتظار...'}
+                        </span>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-black text-amber-500">{correctAnswersCount}/{aqs.length} صح</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* DEDICATED LION'S CHECKLIST TODO SECTION */}
+          <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl shadow-lg text-right">
+            <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+              <h3 className="text-xs font-black text-[#F8FAFC] flex items-center gap-2">
+                <ListTodo className="w-4 h-4 text-amber-500" />
+                <span>مهام وتحديات الأسد الملحمية 🎯</span>
+              </h3>
+              <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                {lionTodos.filter(t => t.completed).length}/{lionTodos.length} منجز
+              </span>
+            </div>
+
+            <p className="text-[10px] text-slate-400 leading-relaxed mb-3 text-right">
+              قائمة مهام مجهزة ومخصصة ومربوطة بالكامل بكل عرين! بمجرد إكمال العرين، يمكنك تحديد المهمة كمنجزة للحفاظ على سجل انتصاراتك العريق!
+            </p>
+
+            {/* Task Checklist list block */}
+            <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+              {lionTodos.map(todo => {
+                const associatedArena = LION_ARENAS.find(a => a.id === todo.arenaId);
+                
+                return (
+                  <div
+                    key={todo.id}
+                    onClick={() => toggleLionTodo(todo.id)}
+                    className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 text-right cursor-pointer transition-all duration-150 ${
+                      todo.completed
+                        ? 'bg-slate-950/10 border-slate-900 text-slate-500 line-through decoration-slate-600'
+                        : 'bg-slate-900/60 border-slate-850 text-slate-350 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <div
+                        className={`w-4 h-4 rounded mt-0.5 border flex items-center justify-center shrink-0 transition-colors ${
+                          todo.completed
+                            ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                            : 'border-slate-700 bg-slate-950 hover:border-slate-500'
+                        }`}
+                      >
+                        {todo.completed && <span className="text-[10px] leading-none">✓</span>}
+                      </div>
+
+                      <div className="min-w-0 flex-1 text-right">
+                        <span className="text-[10px] font-bold leading-relaxed block break-words text-slate-205">
+                          {todo.text}
+                        </span>
+                        {associatedArena && (
+                          <span className="inline-block text-[8px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/15 py-0.5 px-2 rounded-full mt-1.5">
+                            العرين: {associatedArena.title}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Manual Task Add Option */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.currentTarget;
+                const input = form.elements.namedItem('lionTodoText') as HTMLInputElement;
+                if (!input.value.trim()) return;
+                const newTodo = {
+                  id: 'custom-' + Date.now(),
+                  text: input.value.trim() + ' 🦁',
+                  completed: false,
+                  arenaId: selectedLionArenaId
+                };
+                saveLionTodos([...lionTodos, newTodo]);
+                input.value = '';
+              }}
+              className="mt-4 pt-3 border-t border-slate-800/80 flex gap-2"
+            >
+              <input
+                name="lionTodoText"
+                placeholder="أضف مهمتك الخاصة للعرين النشط..."
+                className="flex-1 bg-slate-950 border border-slate-850 text-[10px] px-3 py-2 rounded-xl focus:outline-none focus:border-amber-500 text-right text-slate-300 placeholder-slate-650"
+              />
+              <button
+                type="submit"
+                className="px-3 bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-black rounded-xl transition-colors cursor-pointer"
+              >
+                إضافة
+              </button>
+            </form>
+
+          </div>
+
+        </aside>
+
+        {/* RIGHT COLUMN: ARENAS MAP AND BOOKLET */}
+        <section className="lg:col-span-8 flex flex-col gap-6">
+          
+          {/* ARENAS HORIZONTAL SELECTION CARDS MAP */}
+          <div className="flex flex-col gap-2">
+            <h3 className="text-xs font-black text-amber-400 flex items-center justify-start gap-1.5 px-1 mb-1">
+              <span>🗺️</span>
+              <span>خارطة العرائن المتاحة: اختر مادتك وانقض على الامتحان</span>
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {LION_ARENAS.map(arena => {
+                const isSelected = selectedLionArenaId === arena.id;
+                const aqs = LION_QUESTIONS.filter(q => q.arenaId === arena.id);
+                const answeredCount = aqs.filter(q => lionRevealed[q.id]).length;
+                
+                return (
+                  <div
+                    key={arena.id}
+                    onClick={() => setSelectedLionArenaId(arena.id)}
+                    className={`p-4 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 text-right relative ${
+                      isSelected
+                        ? 'bg-slate-900 border-[#F59E0B] shadow-lg shadow-amber-500/5'
+                        : 'bg-slate-905/40 hover:bg-slate-900 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-amber-500 to-rose-600" />
+                    )}
+
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex justify-between items-start">
+                        <span className="text-2xl">{arena.icon}</span>
+                        <span className={`text-[8px] font-black px-2 py-0.5 rounded-full ${
+                          arena.grade === 'grade12' 
+                            ? 'bg-amber-550/15 text-amber-450 border border-amber-500/20' 
+                            : arena.grade === 'grade11' 
+                            ? 'bg-purple-500/10 text-purple-450 border border-purple-500/20' 
+                            : 'bg-blue-500/10 text-blue-450 border border-blue-500/20'
+                        }`}>
+                          {arena.grade === 'grade12' ? 'الصف الثالث' : arena.grade === 'grade11' ? 'الصف الثاني' : 'الصف الأول'}
+                        </span>
+                      </div>
+                      
+                      <h4 className="text-xs font-black text-slate-105 mt-1 leading-snug">{arena.title}</h4>
+                      <p className="text-[10px] text-slate-400 leading-relaxed font-semibold">{arena.subtitle}</p>
+                    </div>
+
+                    <div className="flex justify-between items-center border-t border-slate-850/60 pt-2 text-[9px] font-black text-slate-500">
+                      <span>الشعبة: {arena.specialization}</span>
+                      <span className={`py-0.5 px-2 rounded-full ${answeredCount === aqs.length ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'}`}>
+                        {answeredCount} / {aqs.length} مجاب
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* BOOKLET CONTENT OF THE SELECTED ARENA */}
+          {(() => {
+            const activeArena = LION_ARENAS.find(a => a.id === selectedLionArenaId);
+            const activeQuestions = LION_QUESTIONS.filter(q => q.arenaId === selectedLionArenaId);
+            
+            if (!activeArena) return null;
+            
+            return (
+              <div className="bg-slate-900/60 border border-slate-800 p-5 rounded-2xl flex flex-col gap-6" id="active-arena-questions">
+                
+                {/* Arena Booklet Header */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-850 pb-4">
+                  <div className="text-right">
+                    <div className="flex items-center justify-start gap-2">
+                      <span className="text-lg">{activeArena.icon}</span>
+                      <span className="text-xs font-black text-amber-400">كتيب الأسئلة لـ {activeArena.title}</span>
+                    </div>
+                    <h3 className="text-sm font-black text-slate-200 mt-1">تحدي الوزارة الموثق والامتحانات الملحمية المطابقة لدليل الطلاب</h3>
+                  </div>
+                  
+                  <button
+                    onClick={() => {
+                      const aqs = LION_QUESTIONS.filter(q => q.arenaId === activeArena.id);
+                      const newAns = { ...lionAnswers };
+                      const newRev = { ...lionRevealed };
+                      aqs.forEach(q => {
+                        delete newAns[q.id];
+                        delete newRev[q.id];
+                      });
+                      saveLionAnswers(newAns);
+                      saveLionRevealed(newRev);
+                    }}
+                    className="py-1 px-3 bg-red-950/20 text-rose-400 hover:bg-red-950/40 text-[10px] rounded-lg transition-colors border border-red-900/30 font-black flex items-center justify-start gap-1 cursor-pointer"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    <span>تصفير إجابات هذا العرين</span>
+                  </button>
+                </div>
+
+                {/* Infinite looping of active questions */}
+                <div className="space-y-6">
+                  {activeQuestions.map((q, idx) => {
+                    const isRevealed = lionRevealed[q.id];
+                    const chosenIndex = lionAnswers[q.id];
+                    const isCorrect = chosenIndex === q.correctIndex;
+                    
+                    return (
+                      <div 
+                        key={q.id}
+                        className="bg-slate-905/40 p-5 rounded-2xl border border-slate-850 hover:border-slate-800/85 transition-all flex flex-col gap-4 shadow-sm text-right"
+                      >
+                        {/* Question Header & badging */}
+                        <div className="flex flex-wrap justify-between items-center gap-2 border-b border-slate-850 pb-2">
+                          <span className="text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/15 py-0.5 px-2.5 rounded-full font-black">
+                            {q.subjectName} | {q.gradeName} | {q.termName}
+                          </span>
+                          
+                          <span className={`text-[9px] font-black py-0.5 px-2 rounded-full ${
+                            q.difficulty === 'صبي الأسد 🐾' 
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                              : q.difficulty === 'أسد متمرس 🦁' 
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                              : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
+                          }`}>
+                            مستوى التحدي: {q.difficulty}
+                          </span>
+                        </div>
+
+                        {/* Question text */}
+                        <div className="flex items-start gap-2.5 justify-start text-right">
+                          <span className="bg-amber-500 text-slate-950 font-mono font-black text-xs px-2.5 py-1 rounded-lg shrink-0 mt-0.5">
+                            س {idx + 1}
+                          </span>
+                          <h4 className="text-xs sm:text-xs font-black text-slate-100 leading-relaxed text-right">
+                            {q.question}
+                          </h4>
+                        </div>
+
+                        {/* Options listing */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mt-2">
+                          {q.options.map((opt, oIdx) => {
+                            const isOptSelected = chosenIndex === oIdx;
+                            const isOptCorrect = oIdx === q.correctIndex;
+                            
+                            let buttonStyles = 'bg-slate-900/60 border-slate-800 text-slate-205 hover:bg-slate-850';
+                            if (isRevealed) {
+                              if (isOptCorrect) {
+                                buttonStyles = 'bg-emerald-500/15 border-emerald-500 text-emerald-300 font-extrabold shadow-sm';
+                              } else if (isOptSelected) {
+                                buttonStyles = 'bg-rose-500/15 border-rose-500 text-rose-300';
+                              } else {
+                                buttonStyles = 'bg-slate-900/20 border-slate-850 text-slate-500 opacity-55';
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={oIdx}
+                                disabled={isRevealed}
+                                onClick={() => {
+                                  if (isRevealed) return;
+                                  
+                                  // Update answers state
+                                  const nextAns = { ...lionAnswers, [q.id]: oIdx };
+                                  const nextRev = { ...lionRevealed, [q.id]: true };
+                                  saveLionAnswers(nextAns);
+                                  saveLionRevealed(nextRev);
+                                  
+                                  // If correct, award XP
+                                  if (oIdx === q.correctIndex) {
+                                    setTotalXP(prev => prev + 60);
+                                    
+                                    // Check checklist update
+                                    const matchingTodo = lionTodos.find(t => t.arenaId === q.arenaId);
+                                    if (matchingTodo) {
+                                      const aqs = LION_QUESTIONS.filter(lq => lq.arenaId === q.arenaId);
+                                      const allCompleted = aqs.every(lq => lq.id === q.id ? true : lionRevealed[lq.id]);
+                                      if (allCompleted) {
+                                        const updatedTodos = lionTodos.map(t => t.id === matchingTodo.id ? { ...t, completed: true } : t);
+                                        saveLionTodos(updatedTodos);
+                                      }
+                                    }
+                                  }
+                                }}
+                                className={`w-full text-right p-3.5 rounded-xl border text-xs transition-all duration-150 flex items-center justify-between cursor-pointer ${buttonStyles}`}
+                              >
+                                <span>{opt}</span>
+                                {isRevealed && isOptCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mr-1" />}
+                                {isRevealed && isOptSelected && !isOptCorrect && <XCircle className="w-4 h-4 text-rose-455 shrink-0 mr-1" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* MODEL EXPLANATION BARS */}
+                        {isRevealed && (
+                          <div className="mt-2 pt-4 border-t border-slate-850 text-right">
+                            <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-850 flex flex-col gap-2.5 text-right">
+                              
+                              <div className="flex items-center justify-start gap-1.5">
+                                <span className="text-base text-emerald-400 font-bold">💡</span>
+                                <span className="text-xs font-black text-emerald-400">التفسير ونموذج الإجابة الفولاذي المعتمد بالبلدي:</span>
+                              </div>
+                              <p className="text-xs leading-relaxed text-slate-205 text-right">
+                                {q.explanation}
+                              </p>
+                              
+                              {q.trickWarning && (
+                                <div className="mt-2 p-3 bg-amber-500/5 rounded-lg border border-amber-500/10 flex flex-col text-right">
+                                  <span className="text-[10px] text-amber-400 font-extrabold flex items-center justify-start gap-1 select-none">
+                                    🚨 انتباه من تركات وفخاخ الامتحان:
+                                  </span>
+                                  <p className="text-[10px] text-slate-300 leading-relaxed mt-1 text-right">
+                                    {q.trickWarning}
+                                  </p>
+                                </div>
+                              )}
+
+                            </div>
+                          </div>
+                        )}
+
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            );
+          })()}
+
+        </section>
+
+      </div>
+
+    </main>
+  )}
 
       {/* FIXED PLATFORM FOOTER */}
       <footer className="h-16 bg-slate-950 border-t border-slate-850 flex items-center justify-between px-6 shrink-0 mt-10" id="platform-footer">
