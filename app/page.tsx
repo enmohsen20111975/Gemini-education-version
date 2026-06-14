@@ -1521,6 +1521,107 @@ export default function ThanaweyaInteractiveHub() {
 
         </section>
 
+        {/* OFFICIAL APPROVED MINISTRY RESOURCES SECTION */}
+        <section className="max-w-7xl mx-auto w-full px-4 sm:px-6 mb-12" id="official-ministry-sources">
+          <div className="bg-slate-900/60 p-6 rounded-3xl border border-slate-800 shadow-xl flex flex-col gap-6 text-right">
+            
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center text-lg">
+                  🏛️
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-100">المصادر والمراجع التعليمية والمناهج المعتمدة</h3>
+                  <p className="text-[11px] text-slate-400 mt-0.5">موادنا مبنية ومبسطة بالكامل بالاعتماد على البوابات الرسمية لوزارة التربية والتعليم وبنك المعرفة المصري</p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-full">
+                موثق رسمي متطابق 100% ⭐
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              
+              {/* Card 1 */}
+              <a 
+                href="http://studentbooks.moe.gov.eg/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-blue-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xl">📚</span>
+                  <span className="text-[9px] font-black text-blue-400 bg-blue-500/15 py-0.5 px-2 rounded-full">رسمي 100%</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-200 group-hover:text-blue-300 transition-colors">المكتبة الإلكترونية للوزارة</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed">بوابتك الرسمية للحصول على الكتب المدرسية والكتيبات التفاعلية بصيغة PDF.</p>
+              </a>
+
+              {/* Card 2 */}
+              <a 
+                href="https://www.ekb.eg" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-emerald-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xl">💡</span>
+                  <span className="text-[9px] font-black text-emerald-400 bg-emerald-500/15 py-0.5 px-2 rounded-full">العملاق المصري</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-200 group-hover:text-emerald-300 transition-colors">بنك المعرفة المصري</h4>
+                <p className="text-[10px] text-slate-450 leading-relaxed">أكبر مكتبة رقمية في العالم لخدمة البحث العلمي والمناهج وتفجير المعرفة.</p>
+              </a>
+
+              {/* Card 3 */}
+              <a 
+                href="https://study.ekb.eg" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-purple-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xl">🚀</span>
+                  <span className="text-[9px] font-black text-purple-400 bg-purple-500/15 py-0.5 px-2 rounded-full">منصة المذاكرة</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-200 group-hover:text-purple-300 transition-colors">منصة ذاكر التعليمية</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed">شروحات فيديو، اختبارات قصيرة، وأبحاث غنية بالاعتماد على حساب بنك المعرفة.</p>
+              </a>
+
+              {/* Card 4 */}
+              <a 
+                href="https://studea.emis.gov.eg font-black" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xl">📝</span>
+                  <span className="text-[9px] font-black text-amber-400 bg-amber-500/15 py-0.5 px-2 rounded-full">النماذج والامتحانات</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-200 group-hover:text-amber-300 transition-colors">بوابة الطالب للوزارة</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed">نماذج اختبارات الوزارة الاسترشادية والتقييمات المنهجية لمعاينة الأسئلة.</p>
+              </a>
+
+              {/* Card 5 */}
+              <a 
+                href="https://www.youtube.com/channel/UCGgeDgjIJ3GXZcLUnExAybw" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-red-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-xl">📺</span>
+                  <span className="text-[9px] font-black text-red-400 bg-red-500/15 py-0.5 px-2 rounded-full">البث الرسمي</span>
+                </div>
+                <h4 className="text-xs font-black text-slate-200 group-hover:text-red-300 transition-colors">قناة الوزارة على يوتيوب</h4>
+                <p className="text-[10px] text-slate-400 leading-relaxed">فيديوهات البث التعليمي المباشر وحصص الشرح المصورة من كبار الأساتذة.</p>
+              </a>
+
+            </div>
+
+          </div>
+        </section>
+
       </main>
 
       {/* FIXED PLATFORM FOOTER */}
