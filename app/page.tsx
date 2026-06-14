@@ -27,7 +27,10 @@ import {
   Compass,
   TrendingUp,
   Dna,
-  Binary
+  Binary,
+  Plus,
+  Trash2,
+  ListTodo
 } from 'lucide-react';
 import { ALL_ACADEMIC_YEARS, SpecializationID } from '../lib/data';
 
@@ -37,6 +40,60 @@ export default function ThanaweyaInteractiveHub() {
   const [selectedSpecId, setSelectedSpecId] = useState<SpecializationID>('scientific_science');
   const [selectedTerm, setSelectedTerm] = useState<1 | 2>(1);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>('g12_physics');
+  
+  // قائمة المهام لتعبئة المواد (Todo List) مع الحفظ التلقائي في المتصفح
+  const [todos, setTodos] = useState<{ id: string; text: string; completed: boolean; category: string }[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sharah_todos');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return [
+      { id: 't1', text: 'تعبئة مادة الكيمياء الشاملة لأولى ثانوي (الترم الأول والترم الثاني)', completed: true, category: 'الصف الأول الثانوي' },
+      { id: 't2', text: 'إدخال مادة الكيمياء وبنية الذرة والجدول الدوري لـ ثانية ثانوي عِلمي', completed: true, category: 'الصف الثاني الثانوي' },
+      { id: 't3', text: 'توسيع مادة الكيمياء لثالثة ثانوي (الاتزان وقاعدة لوشاتيليه العجيبة)', completed: true, category: 'الصف الثالث الثانوي' },
+      { id: 't4', text: 'تجهيز الأسئلة التفاعلية والتركات والخدع الامتحانية المندلية والكيرشوفية', completed: false, category: 'بنود عامة' },
+      { id: 't5', text: 'مراجعة المادة العلمية للتأكد من صياغتها 100% بالعامية المصرية التبسيطية لفرقعة المناهج', completed: true, category: 'بنود عامة' },
+      { id: 't6', text: 'تطوير محاكيات المعمل الكيميائي والفيزيائي التفاعلية ومثبتات الـ pH وقانون أوم', completed: true, category: 'المحاكيات' }
+    ];
+  });
+
+  const [newTodoText, setNewTodoText] = useState('');
+  const [newTodoCategory, setNewTodoCategory] = useState('بنود عامة');
+
+  const saveTodos = (newTodos: typeof todos) => {
+    setTodos(newTodos);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sharah_todos', JSON.stringify(newTodos));
+    }
+  };
+
+  const addTodo = () => {
+    if (!newTodoText.trim()) return;
+    const item = {
+      id: 't_' + Date.now(),
+      text: newTodoText.trim(),
+      completed: false,
+      category: newTodoCategory
+    };
+    saveTodos([...todos, item]);
+    setNewTodoText('');
+  };
+
+  const toggleTodo = (id: string) => {
+    const updated = todos.map(t => t.id === id ? { ...t, completed: !t.completed } : t);
+    saveTodos(updated);
+  };
+
+  const deleteTodo = (id: string) => {
+    const updated = todos.filter(t => t.id !== id);
+    saveTodos(updated);
+  };
   
   // Syllabus selection states
   const [selectedUnitIdx, setSelectedUnitIdx] = useState<number>(0);
@@ -445,6 +502,120 @@ export default function ThanaweyaInteractiveHub() {
             <div className="mt-3 text-center">
               <span className="text-[10px] text-amber-400 font-black">شعار المادة الفخري: {currentSubject?.badge || 'سيد المواد 🎓'}</span>
             </div>
+          </div>
+
+          {/* INTERACTIVE STUDY PROGRESS TODO LIST */}
+          <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl shadow-lg" id="syllabus-todo-list">
+            <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+              <h3 className="text-xs font-black text-[#F8FAFC] flex items-center gap-2">
+                <ListTodo className="w-4 h-4 text-emerald-400" />
+                <span>خطة تعبئة وتغطية المناهج العامة 📝</span>
+              </h3>
+              <span className="text-[9px] font-black text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                {todos.filter(t => t.completed).length}/{todos.length} مكتمل
+              </span>
+            </div>
+
+            <p className="text-[10px] text-slate-400 leading-relaxed mb-3">
+              تابع تفعيل وحشو جميع المواد، الشعب، والأبواب المنهجية بالتبسيط اللذيذ والأسئلة! يمكنك إضافة مهامك الخاصة لمتابعة مذاكرتك الفولاذية.
+            </p>
+
+            {/* Input Form for adding a new task */}
+            <div className="space-y-2 mb-4 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="اكتب اسم المهمة أو الدرس هنا..."
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                  className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-medium"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') addTodo();
+                  }}
+                />
+                <button
+                  onClick={addTodo}
+                  className="bg-blue-600 hover:bg-blue-500 transition-colors p-2 text-white rounded-lg flex items-center justify-center shrink-0"
+                  title="إضافة المهمة"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-1.5">
+                <span className="text-[9px] text-slate-500 font-bold shrink-0">التصنيف:</span>
+                <select
+                  value={newTodoCategory}
+                  onChange={(e) => setNewTodoCategory(e.target.value)}
+                  className="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 text-[10px] text-slate-350 focus:outline-none font-black flex-1 text-left"
+                >
+                  <option value="الصف الأول الثانوي">الصف الأول الثانوي</option>
+                  <option value="الصف الثاني الثانوي">الصف الثاني الثانوي</option>
+                  <option value="الصف الثالث الثانوي">الصف الثالث الثانوي</option>
+                  <option value="المحاكيات">المحاكيات</option>
+                  <option value="بنود عامة">بنود عامة</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Tasks list */}
+            {todos.length === 0 ? (
+              <div className="text-center py-6 bg-slate-950/20 rounded-xl border border-dashed border-slate-850">
+                <span className="text-xl block mb-1">🏁</span>
+                <span className="text-[10px] font-bold text-slate-500">القائمة فاضية! ضيف لك كام مهمة تفرتكها.</span>
+              </div>
+            ) : (
+              <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
+                {todos.map((todo) => (
+                  <div
+                    key={todo.id}
+                    className={`p-2 rounded-xl border flex items-center justify-between gap-3 text-right group transition-all duration-150 ${
+                      todo.completed
+                        ? 'bg-slate-950/20 border-slate-900 text-slate-500 line-through decoration-slate-600'
+                        : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <button
+                        onClick={() => toggleTodo(todo.id)}
+                        className={`w-3.5 h-3.5 rounded mt-0.5 border flex items-center justify-center shrink-0 transition-colors focus:outline-none ${
+                          todo.completed
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400'
+                            : 'border-slate-600 hover:border-slate-500 bg-slate-950'
+                        }`}
+                      >
+                        {todo.completed && <span className="text-[9px] leading-none">✓</span>}
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-medium leading-relaxed block break-words">
+                          {todo.text}
+                        </span>
+                        <span className={`inline-block text-[8px] font-black px-1.5 py-0.5 rounded-full mt-1 ${
+                          todo.category === 'الصف الأول الثانوي'
+                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                            : todo.category === 'الصف الثاني الثانوي'
+                            ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                            : todo.category === 'الصف الثالث الثانوي'
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}>
+                          {todo.category}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => deleteTodo(todo.id)}
+                      className="text-slate-500 hover:text-red-400 transition-colors opacity-60 group-hover:opacity-100 focus:outline-none shrink-0"
+                      title="حذف المهمة"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
         </aside>
