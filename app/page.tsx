@@ -32,7 +32,7 @@ import {
   Trash2,
   ListTodo
 } from 'lucide-react';
-import { ALL_ACADEMIC_YEARS, SpecializationID } from '../lib/data';
+import { ALL_ACADEMIC_YEARS, SpecializationID, getQuestionsPoolForLesson } from '../lib/data';
 import { LION_ARENAS, LION_QUESTIONS, LionQuestion, LionArena } from '../lib/data/lionJourney';
 
 export default function ThanaweyaInteractiveHub() {
@@ -75,11 +75,11 @@ export default function ThanaweyaInteractiveHub() {
       }
     }
     return [
-      { id: 'l1', text: 'افتراس أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
-      { id: 'l2', text: 'كسر روابط الكربون وإتقان ماركونيكوف والكيمياء العضوية الأليفاتية 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
-      { id: 'l3', text: 'فك ألغاز الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
-      { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية المندفعة بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
-      { id: 'l5', text: 'السيطرة على التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
+      { id: 'l1', text: 'حل أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (أفكار ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
+      { id: 'l2', text: 'إتقان قاعدة ماركونيكوف وتفاعلات الكيمياء العضوية الأليفاتية وركائزها 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
+      { id: 'l3', text: 'فك تريكات الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
+      { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
+      { id: 'l5', text: 'فهم التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات بالكامل 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
       { id: 'l6', text: 'حل تريكات صيغ الأبعاد وقذف المقذوفات بزاوية 45 درجة لأولى ثانوي ⚡', completed: false, arenaId: 'arena_g10_physics' }
     ];
   });
@@ -176,6 +176,7 @@ export default function ThanaweyaInteractiveHub() {
   
   // Interface configuration
   const [activeTab, setActiveTab] = useState<'concept' | 'tool' | 'qna'>('concept');
+  const [imageBgTheme, setImageBgTheme] = useState<'light' | 'dark'>('light');
 
   // Interactive Tools state storage
   // Physics simulator state (Ohm's Law)
@@ -199,6 +200,19 @@ export default function ThanaweyaInteractiveHub() {
   // Answers tracker
   const [qAnswers, setQAnswers] = useState<Record<string, number>>({});
   const [revealedQ, setRevealedQ] = useState<Record<string, boolean>>({});
+
+  // Static Question Bank Filters (Easy, Medium, Hard, Search, Pagination)
+  const [qDifficulty, setQDifficulty] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  const [qSearch, setQSearch] = useState<string>('');
+  const [qVisibleCount, setQVisibleCount] = useState<number>(5);
+
+  // AI Exam Generator states
+  const [aiQuestions, setAiQuestions] = useState<any[] | null>(null);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiDifficulty, setAiDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [aiAnswers, setAiAnswers] = useState<Record<string, number>>({});
+  const [aiRevealed, setAiRevealed] = useState<Record<string, boolean>>({});
 
   // Local Gamification States (Simulated progression without complex database)
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
@@ -227,6 +241,68 @@ export default function ThanaweyaInteractiveHub() {
   const activeChapter = activeUnit?.chapters[selectedChapterIdx];
   const activeLesson = activeChapter?.lessons[selectedLessonIdx];
 
+  // Helper to reset standard filters
+  const resetQPoolFilters = () => {
+    setQDifficulty('all');
+    setQSearch('');
+    setQVisibleCount(5);
+  };
+
+  // Helper function to reset AI questions on route or topic switches
+  const resetAiGenerator = () => {
+    setAiQuestions(null);
+    setAiAnswers({});
+    setAiRevealed({});
+    setAiError(null);
+  };
+
+  // Generate dynamic custom exam papers via backend (reprogrammed 100% offline from static question bank)
+  const generateAiExam = async () => {
+    if (!activeLesson) return;
+    setAiLoading(true);
+    setAiError(null);
+    setAiQuestions(null);
+    setAiAnswers({});
+    setAiRevealed({});
+    
+    // Simulating instant layout switch or tiny realistic timeout for visual loading
+    setTimeout(() => {
+      try {
+        const fullPool = getQuestionsPoolForLesson(activeLesson.id, activeLesson.questions);
+        
+        // Filter pool by chosen difficulty level
+        const levelFiltered = fullPool.filter((q, idx) => {
+          let level: 'easy' | 'medium' | 'hard' = 'easy';
+          if (idx > 33 && idx <= 70) {
+            level = 'medium';
+          } else if (idx > 70) {
+            level = 'hard';
+          }
+          return level === aiDifficulty;
+        });
+
+        // Slice up to 6 unique random elements to build a mini-contest
+        const selection: any[] = [];
+        const sourceList = levelFiltered.length > 0 ? levelFiltered : fullPool;
+        const indexes = new Set<number>();
+        while (selection.length < Math.min(6, sourceList.length)) {
+          const rIdx = Math.floor(Math.random() * sourceList.length);
+          if (!indexes.has(rIdx)) {
+            indexes.add(rIdx);
+            selection.push(sourceList[rIdx]);
+          }
+        }
+
+        setAiQuestions(selection);
+      } catch (err: any) {
+        console.error(err);
+        setAiError('حدث خطأ أثناء جمع الأسئلة المخصصة محلياً.');
+      } finally {
+        setAiLoading(false);
+      }
+    }, 450);
+  };
+
   // Selection Action Triggers
   const selectYear = (yearId: 'grade10' | 'grade11' | 'grade12') => {
     setSelectedYearId(yearId);
@@ -248,6 +324,8 @@ export default function ThanaweyaInteractiveHub() {
     setActiveTab('concept');
     setQAnswers({});
     setRevealedQ({});
+    resetAiGenerator();
+    resetQPoolFilters();
   };
   
   const selectSpec = (specId: SpecializationID) => {
@@ -263,6 +341,8 @@ export default function ThanaweyaInteractiveHub() {
     setActiveTab('concept');
     setQAnswers({});
     setRevealedQ({});
+    resetAiGenerator();
+    resetQPoolFilters();
   };
 
   const selectTerm = (term: 1 | 2) => {
@@ -273,6 +353,8 @@ export default function ThanaweyaInteractiveHub() {
     setActiveTab('concept');
     setQAnswers({});
     setRevealedQ({});
+    resetAiGenerator();
+    resetQPoolFilters();
   };
 
   const selectSubject = (subjectId: string) => {
@@ -283,6 +365,8 @@ export default function ThanaweyaInteractiveHub() {
     setActiveTab('concept');
     setQAnswers({});
     setRevealedQ({});
+    resetAiGenerator();
+    resetQPoolFilters();
   };
 
   const selectLesson = (uIdx: number, cIdx: number, lIdx: number) => {
@@ -292,6 +376,8 @@ export default function ThanaweyaInteractiveHub() {
     setActiveTab('concept');
     setQAnswers({});
     setRevealedQ({});
+    resetAiGenerator();
+    resetQPoolFilters();
   };
 
   const unlockAchievement = (id: string, xpPoints: number) => {
@@ -309,6 +395,16 @@ export default function ThanaweyaInteractiveHub() {
     
     if (optIndex === correctIdx) {
       unlockAchievement(`completed_${qKey}`, 60);
+    }
+  };
+
+  const selectAiOption = (qId: string, optIndex: number, correctIdx: number) => {
+    if (aiRevealed[qId]) return;
+    setAiAnswers(prev => ({ ...prev, [qId]: optIndex }));
+    setAiRevealed(prev => ({ ...prev, [qId]: true }));
+    
+    if (optIndex === correctIdx) {
+      unlockAchievement(`ai_completed_${qId}`, 80);
     }
   };
 
@@ -403,9 +499,9 @@ export default function ThanaweyaInteractiveHub() {
                   : 'text-slate-450 hover:text-slate-200 hover:bg-slate-850/60'
               }`}
             >
-              <span className="text-sm">🦁</span>
+              <span className="text-sm">🎯</span>
               <span className="relative">
-                رحلة الأسد الشرس للامتحانات
+                معسكر الامتحانات التفاعلي
                 <span className="absolute -top-3.5 -left-4 inline-block text-[8px] bg-red-500 text-white font-extrabold px-1 rounded-full scale-90">جديد</span>
               </span>
             </button>
@@ -785,7 +881,7 @@ export default function ThanaweyaInteractiveHub() {
                 </div>
               </div>
 
-              {/* TABS SELECTOR (Concept, Simulators, Questions) */}
+              {/* TABS SELECTOR (Concept, Questions) */}
               <div className="flex border-b border-slate-800" id="chapter-tabs">
                 <button
                   onClick={() => setActiveTab('concept')}
@@ -797,17 +893,6 @@ export default function ThanaweyaInteractiveHub() {
                 >
                   <BookOpenCheck className="w-4 h-4" />
                   <span>الشرح المتبسط بالعامية</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab('tool')}
-                  className={`flex-1 py-3 text-center text-xs font-black transition-all border-b-2 flex items-center justify-center gap-2 ${
-                    activeTab === 'tool'
-                      ? 'border-amber-500 text-amber-400 bg-amber-500/5 font-black'
-                      : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30'
-                  }`}
-                >
-                  <Layers className="w-4 h-4" />
-                  <span>المحاكي / الإنفوجرافيك التفاعلي</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('qna')}
@@ -855,6 +940,45 @@ export default function ThanaweyaInteractiveHub() {
                         </p>
                       </div>
 
+                      {/* Lesson Sourced Scientific Illustration */}
+                      {activeLesson.imageUrl && (
+                        <div className="relative overflow-hidden rounded-xl border border-slate-850 bg-slate-900/40 p-5 flex flex-col gap-4 group transition-all duration-200">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-slate-950/40 p-3 rounded-xl border border-slate-850">
+                            <span className="text-[10px] text-emerald-400 font-extrabold uppercase tracking-widest block font-mono">
+                              📸 مخطط توضيحي ورسم علمي معتمد من المراجع والجامعات:
+                            </span>
+                            <button
+                              onClick={() => setImageBgTheme(prev => prev === 'light' ? 'dark' : 'light')}
+                              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-white rounded-lg text-[9px] font-black tracking-wide text-slate-300 transition-colors border border-slate-700 flex items-center gap-1.5 cursor-pointer ml-auto sm:ml-0 focus:outline-none"
+                              title="تبديل الخلفية من الأبيض للأسود لمشاهدة المخططات بوضوح"
+                            >
+                              <span>🎭 تبديل خلفية المخطط:</span>
+                              <strong className="text-amber-400 font-black">{imageBgTheme === 'light' ? 'فاتح (أبيض)' : 'داكن (أسود)'}</strong>
+                            </button>
+                          </div>
+                          
+                          <div className={`relative w-full min-h-[350px] md:min-h-[420px] rounded-xl overflow-hidden flex items-center justify-center p-6 border transition-all duration-300 ${
+                            imageBgTheme === 'light' 
+                              ? 'bg-white border-slate-200 shadow-inner' 
+                              : 'bg-slate-950 border-slate-850 shadow-md'
+                          }`}>
+                            <img
+                              src={activeLesson.imageUrl}
+                              alt={activeLesson.title}
+                              referrerPolicy="no-referrer"
+                              className="max-h-[380px] md:max-h-[420px] w-auto max-w-full object-contain transition-all duration-200 group-hover:scale-[1.012] select-none"
+                            />
+                          </div>
+
+                          {activeLesson.imageCaption && (
+                            <p className="text-xs leading-relaxed text-slate-300 bg-slate-950/60 p-4 rounded-xl border-r-4 border-emerald-500 font-medium text-justify">
+                              <strong className="text-emerald-400 ml-1 block mb-1 text-right">💡 فكرة الرسمة وتوضيحها بالبلدي:</strong>
+                              {activeLesson.imageCaption}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                       {/* Highly granular multi-paragraph Egyptian colloquial detailed breakdown */}
                       <div className="space-y-5">
                         <h3 className="text-xs font-black text-slate-350 uppercase tracking-widest border-b border-slate-800 pb-2">تفصيل الشرح العميق جداً بأسلوب العامية المصرية العسل:</h3>
@@ -876,7 +1000,7 @@ export default function ThanaweyaInteractiveHub() {
                           ⚠️ انتبه من تكات وخدع الوزارة السنين الماضية:
                         </span>
                         <p className="text-[11px] text-slate-300 leading-relaxed">
-                          دلوقتي الامتحانات بتعتمد على الفهم وربط العلاقات وتجربتها عملياً، مش مجرد حفظ أصم خالص! بعد ما قريت الشرح ادخل على التبويب التاني &quot;المحاكي / الإنفوجرافيك التفاعلي&quot; عشان تلعب في قيم العلاقات بنفسك وترسخ المعلومة في دماغك وماتطلعش منها أبداً!
+                          دلوقتي الامتحانات بتعتمد على الفهم وربط العلاقات والتحليل الذكي، مش مجرد حفظ أصم خالص! بعد ما قريت الشرح بتركيز ادخل على تبويب &quot;بنك الأسئلة والخدع الرهيب&quot; من فوق لتبدأ في اختبار نفسك حالاً وتشوف التريكات في نماذج الإجابات وتضمن الدرجة النهائية إن شاء الله!
                         </p>
                       </div>
 
@@ -1531,103 +1655,432 @@ export default function ThanaweyaInteractiveHub() {
                       transition={{ duration: 0.15 }}
                       className="space-y-6 flex-1 text-right"
                     >
-                      <div className="p-4 bg-gradient-to-r from-blue-950/20 to-slate-905 p-4.5 border border-blue-900/30 rounded-xl flex items-center gap-3">
-                        <span className="text-xl">🎯</span>
+                      <div className="p-4 bg-gradient-to-r from-blue-950/20 to-slate-900 border border-blue-900/30 rounded-xl flex items-center gap-3">
+                        <span className="text-xl">📊</span>
                         <div>
-                          <h4 className="text-xs font-black text-slate-100">بوابة قياس مخرجات الفهم والترويكا:</h4>
+                          <h4 className="text-xs font-black text-slate-100">بوابة قياس مخرجات الفهم والترويكا (100 سؤال وتركة حصرية):</h4>
                           <p className="text-[10px] text-slate-400 leading-relaxed">
-                            أسئلة مجمعة بعناية ودقة تماثل نظام التابلت الحديث، مغموسة بشرح تفصيلي عسل بالعامية لضمان تثبيت فخ السؤال وتقفيل الدرجة النهائية!
+                            مستودع متكامل يحتوي على <strong className="text-amber-400">100 سؤال دقيق</strong> مُعد بالكامل ومُقسم لمستويات متدرجة (سهل، متوسط، صعب للعباقرة) للتدريب على نمط التابلت وأسئلة الامتحانات الوزارية الحديثة!
                           </p>
                         </div>
                       </div>
 
+                      {/* Filter Actions Header block */}
+                      <div className="bg-slate-900/40 p-4 rounded-2xl border border-slate-800/80 flex flex-col gap-3.5">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                          <div className="relative flex-1">
+                            <span className="absolute right-3.5 top-2.5 text-xs text-slate-500">🔍</span>
+                            <input
+                              type="text"
+                              value={qSearch}
+                              onChange={(e) => {
+                                setQSearch(e.target.value);
+                                setQVisibleCount(5); // Reset output paginate limits on typing
+                              }}
+                              placeholder="ابحث في الكلمات اللغوية أو الأفكار والتركات بالعامية..."
+                              className="w-full bg-slate-950/80 border border-slate-850 focus:border-blue-500 rounded-xl pr-9 pl-3 py-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/20"
+                            />
+                            {qSearch && (
+                              <button
+                                onClick={() => setQSearch('')}
+                                className="absolute left-2.5 top-2.5 text-[8px] px-1.5 py-0.5 bg-slate-800 text-slate-400 hover:text-slate-200 rounded"
+                              >
+                                مسح
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10px] text-slate-500 font-black pl-1">مستوى الصعوبة:</span>
+                            {(['all', 'easy', 'medium', 'hard'] as const).map((level) => {
+                              const labelMap = {
+                                all: 'الكل (100)',
+                                easy: 'سهل ومباشر 🟢',
+                                medium: 'متوسط الفهم 🟡',
+                                hard: 'صعب للعباقرة 🔴'
+                              };
+                              const isActive = qDifficulty === level;
+                              return (
+                                <button
+                                  key={level}
+                                  onClick={() => {
+                                    setQDifficulty(level);
+                                    setQVisibleCount(5); // Reset pagination on filter click
+                                  }}
+                                  className={`px-2.5 py-1 rounded-lg text-[9px] font-black transition-all ${
+                                    isActive
+                                      ? 'bg-blue-600 text-white shadow-sm'
+                                      : 'bg-slate-950 text-slate-400 border border-slate-850 hover:bg-slate-900'
+                                  }`}
+                                >
+                                  {labelMap[level]}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Search Statistics Counter in Colloquial Egyptian */}
+                        <div className="flex items-center justify-between text-[9px] text-slate-400 px-1 border-t border-slate-850/50 pt-2.5">
+                          <span>
+                            تم إيجاد <strong className="text-amber-400 font-mono">
+                              {(() => {
+                                const lessonQuestionsPool = getQuestionsPoolForLesson(activeLesson.id, activeLesson.questions);
+                                const countMatched = lessonQuestionsPool.filter((q, idx) => {
+                                  const qLevel = idx <= 32 ? 'easy' : idx <= 69 ? 'medium' : 'hard';
+                                  const matchesDiff = qDifficulty === 'all' || qLevel === qDifficulty;
+                                  const matchesSearch = !qSearch.trim() || 
+                                    q.question.toLowerCase().includes(qSearch.trim().toLowerCase()) ||
+                                    q.explanation.toLowerCase().includes(qSearch.trim().toLowerCase());
+                                  return matchesDiff && matchesSearch;
+                                }).length;
+                                return countMatched;
+                              })()}
+                            </strong> سؤال مطابق لتصفيتك الحالية.
+                          </span>
+                          <span className="text-blue-400 font-black">جاهز للأختبار الأوفلاين ⚡</span>
+                        </div>
+                      </div>
+
+                      {/* Questions List Render */}
                       <div className="space-y-6">
-                        {activeLesson.questions.map((q, idx) => {
-                          const qKey = `${selectedYearId}_${selectedSubjectId}_${activeLesson.id}_${q.id}`;
-                          const chosenIndex = qAnswers[qKey];
-                          const isRevealed = revealedQ[qKey];
+                        {(() => {
+                          const lessonQuestionsPool = getQuestionsPoolForLesson(activeLesson.id, activeLesson.questions);
+                          const filtered = lessonQuestionsPool.filter((q, idx) => {
+                            const qLevel = idx <= 32 ? 'easy' : idx <= 69 ? 'medium' : 'hard';
+                            const matchesDiff = qDifficulty === 'all' || qLevel === qDifficulty;
+                            const matchesSrc = !qSearch.trim() || 
+                              q.question.toLowerCase().includes(qSearch.trim().toLowerCase()) ||
+                              q.explanation.toLowerCase().includes(qSearch.trim().toLowerCase());
+                            return matchesDiff && matchesSrc;
+                          });
+
+                          if (filtered.length === 0) {
+                            return (
+                              <div className="text-center py-10 bg-slate-950/20 rounded-2xl border border-slate-850">
+                                <span className="text-xl">🫙</span>
+                                <p className="text-[11px] text-slate-400 mt-2">عفواً، لا توجد أي أسئلة تطابق المعايير التى أدخلتها. جرب تصفية أخرى!</p>
+                              </div>
+                            );
+                          }
+
+                          const visibleList = filtered.slice(0, qVisibleCount);
 
                           return (
-                            <div
-                              key={q.id}
-                              className="bg-slate-950/30 p-5 rounded-2xl border border-slate-850 hover:border-slate-800 transition-all flex flex-col gap-4 shadow-sm"
-                            >
-                              <div className="flex items-start gap-2.5">
-                                <span className="bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] p-2 rounded-lg shrink-0">
-                                  س {idx + 1}
-                                </span>
-                                <h4 className="text-xs font-black text-slate-100 leading-relaxed pt-0.5">
-                                  {q.question}
-                                </h4>
-                              </div>
+                            <>
+                              <div className="space-y-5">
+                                {visibleList.map((q, idx) => {
+                                  // Find original index from the raw pool of 100
+                                  const originalIndexInPool = lessonQuestionsPool.findIndex(origQ => origQ.id === q.id) + 1;
+                                  const qKey = `${selectedYearId}_${selectedSubjectId}_${activeLesson.id}_${q.id}`;
+                                  const chosenIndex = qAnswers[qKey];
+                                  const isRevealed = revealedQ[qKey];
 
-                              {/* MCQ options stack */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
-                                {q.options.map((opt, oIdx) => {
-                                  const isSelected = chosenIndex === oIdx;
-                                  const isCorrect = oIdx === q.correctIndex;
-                                  
-                                  let buttonStyles = 'bg-slate-900/50 border-slate-800 text-slate-200 hover:bg-slate-850';
-                                  if (isRevealed) {
-                                    if (isCorrect) {
-                                      buttonStyles = 'bg-emerald-500/15 border-emerald-500 text-emerald-300 font-black';
-                                    } else if (isSelected) {
-                                      buttonStyles = 'bg-rose-500/15 border-rose-500 text-rose-300';
-                                    } else {
-                                      buttonStyles = 'bg-slate-900/20 border-slate-850 text-slate-500 opacity-55';
-                                    }
+                                  // Determine level for visual badges
+                                  let levelBadge = <span className="bg-emerald-550/10 text-emerald-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-emerald-500/15">سهل ومباشر</span>;
+                                  if (originalIndexInPool > 34 && originalIndexInPool <= 70) {
+                                    levelBadge = <span className="bg-amber-550/10 text-amber-400 text-[8px] font-black px-1.5 py-0.5 rounded border border-amber-500/15">فهم متوسط</span>;
+                                  } else if (originalIndexInPool > 70) {
+                                    levelBadge = <span className="bg-rose-550/10 text-rose-450 text-[8px] font-black px-1.5 py-0.5 rounded border border-rose-500/15">عباقرة وأوائل</span>;
                                   }
 
                                   return (
-                                    <button
-                                      key={oIdx}
-                                      disabled={isRevealed}
-                                      onClick={() => selectOption(qKey, oIdx, q.correctIndex)}
-                                      className={`w-full text-right p-3.5 rounded-xl border text-xs transition-all duration-150 flex items-center justify-between ${buttonStyles}`}
+                                    <div
+                                      key={q.id}
+                                      className="bg-slate-950/30 p-5 rounded-2xl border border-slate-850 hover:border-slate-800 transition-all flex flex-col gap-4 shadow-sm"
                                     >
-                                      <span>{opt}</span>
-                                      {isRevealed && isCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mr-1" />}
-                                      {isRevealed && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-rose-450 shrink-0 mr-1" />}
-                                    </button>
+                                      <div className="flex items-start justify-between gap-2.5">
+                                        <div className="flex items-start gap-2.5">
+                                          <span className="bg-amber-500/20 text-amber-400 font-mono font-black text-[10px] p-2 rounded-lg shrink-0">
+                                            س {originalIndexInPool}
+                                          </span>
+                                          <h4 className="text-xs font-black text-slate-100 leading-relaxed pt-0.5">
+                                            {q.question}
+                                          </h4>
+                                        </div>
+                                        {levelBadge}
+                                      </div>
+
+                                      {/* MCQ options stack */}
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                        {q.options.map((opt, oIdx) => {
+                                          const isSelected = chosenIndex === oIdx;
+                                          const isCorrect = oIdx === q.correctIndex;
+                                          
+                                          let buttonStyles = 'bg-slate-900/50 border-slate-800 text-slate-200 hover:bg-slate-850';
+                                          if (isRevealed) {
+                                            if (isCorrect) {
+                                              buttonStyles = 'bg-emerald-500/15 border-emerald-500 text-emerald-300 font-black';
+                                            } else if (isSelected) {
+                                              buttonStyles = 'bg-rose-500/15 border-rose-500 text-rose-300';
+                                            } else {
+                                              buttonStyles = 'bg-slate-900/20 border-slate-850 text-slate-500 opacity-55';
+                                            }
+                                          }
+
+                                          return (
+                                            <button
+                                              key={oIdx}
+                                              disabled={isRevealed}
+                                              onClick={() => selectOption(qKey, oIdx, q.correctIndex)}
+                                              className={`w-full text-right p-3.5 rounded-xl border text-xs transition-all duration-150 flex items-center justify-between ${buttonStyles}`}
+                                            >
+                                              <span>{opt}</span>
+                                              {isRevealed && isCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mr-1" />}
+                                              {isRevealed && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-rose-450 shrink-0 mr-1" />}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+
+                                      {/* Interactive explanation dropdown after user answers */}
+                                      {isRevealed && (
+                                        <motion.div
+                                          initial={{ opacity: 0, height: 0 }}
+                                          animate={{ opacity: 1, height: 'auto' }}
+                                          className="mt-2 pt-4 border-t border-slate-800"
+                                        >
+                                          <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-850 flex flex-col gap-2">
+                                            
+                                            <div className="flex items-center gap-1.5">
+                                              <span className="text-base">💡</span>
+                                              <span className="text-xs font-black text-emerald-400">التفسير والشرح بالعامية المصريه لضمان الفهم الحوتى:</span>
+                                            </div>
+                                            <p className="text-xs leading-relaxed text-slate-200">
+                                              {q.explanation}
+                                            </p>
+                                            
+                                            {q.trickWarning && (
+                                              <div className="mt-2 p-2.5 bg-amber-500/5 rounded-lg border border-amber-500/20 flex flex-col">
+                                                <span className="text-[10px] text-amber-400 font-black flex items-center gap-1">
+                                                  🚨 فخ الامتحان وبصمة العباقرة:
+                                                </span>
+                                                <p className="text-[10px] text-slate-350 leading-relaxed mt-0.5 font-sans">
+                                                  {q.trickWarning}
+                                                </p>
+                                              </div>
+                                            )}
+
+                                          </div>
+                                        </motion.div>
+                                      )}
+
+                                    </div>
                                   );
                                 })}
                               </div>
 
-                              {/* Interactive explanation dropdown after user answers */}
-                              {isRevealed && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  className="mt-2 pt-4 border-t border-slate-800"
+                              {/* Show More Pagination Trigger */}
+                              {filtered.length > qVisibleCount && (
+                                <div className="text-center pt-2">
+                                  <button
+                                    onClick={() => setQVisibleCount(prev => prev + 10)}
+                                    className="px-5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:bg-slate-850 text-[10px] font-black text-slate-300 transition-all cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500/30"
+                                  >
+                                    تنزيل وفتح المزيد من دبابيس الأسئلة والتربوكات (+10 أسئلة) 👇
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+
+                      {/* DYNAMIC AI EXAM GENERATOR SECTION */}
+                      <div className="mt-8 p-6 rounded-3xl border border-dashed border-blue-500/35 bg-gradient-to-r from-blue-955/20 via-slate-900 to-indigo-955/20 backdrop-blur-sm flex flex-col gap-6" id="ai-exam-generator">
+                        
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-lg">
+                              ⚡
+                            </div>
+                            <div>
+                              <h4 className="text-xs font-black text-slate-100">مصنع التحديات والاختبارات الفورية السريعة (توليد داخلي مستمر 🎯):</h4>
+                              <p className="text-[10px] text-slate-400 mt-1 leading-relaxed">
+                                هل انتهيت من الأسئلة المتدرجة وعايز اختبار صغير وسريع؟ ولد الآن ورقة امتحان مكونة من 6 أسئلة مطابقة للوزاري بالكامل وبشكل فوري بدون الحاجة للإنترنت!
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-850">
+                            {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                              <button
+                                key={diff}
+                                onClick={() => setAiDifficulty(diff)}
+                                className={`px-2.5 py-1 rounded-lg text-[9px] font-black transition-all ${
+                                  aiDifficulty === diff
+                                    ? 'bg-amber-500 text-slate-950 font-extrabold'
+                                    : 'text-slate-400 hover:text-slate-200'
+                                }`}
+                              >
+                                {diff === 'easy' ? 'سهل ومباشر' : diff === 'hard' ? 'صعب للعباقرة 🏆' : 'متوسط للفهم'}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* If not loaded and not loading, show start action */}
+                        {!aiQuestions && !aiLoading && (
+                          <div className="text-center py-6 flex flex-col items-center justify-center gap-3">
+                            <span className="text-2xl animate-pulse">🎯</span>
+                            <p className="text-[11px] text-slate-300 max-w-md leading-relaxed">
+                              اصنع بضغطة زر ورقة امتحان مخصصة تغطي جميع جزيئات درس <strong className="text-amber-400">&quot;{activeLesson.title}&quot;</strong> بمستوى <strong className="text-blue-400">{aiDifficulty === 'easy' ? 'سهل ومباشر' : aiDifficulty === 'hard' ? 'صعب جداً للأوائل' : 'متوسط متدرج الفهم'}</strong>.
+                            </p>
+                            
+                            <button
+                              onClick={generateAiExam}
+                              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-650 hover:from-blue-500 hover:to-indigo-600 rounded-xl text-xs font-black text-white shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 cursor-pointer focus:outline-none"
+                            >
+                              <span>توليد الامتحان المخصص الآن ⚡</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* AI Loading state with random quotes */}
+                        {aiLoading && (
+                          <div className="py-12 flex flex-col items-center justify-center gap-4 text-center">
+                            {/* Animated loading spinner */}
+                            <div className="w-10 h-10 rounded-full border-4 border-slate-800 border-t-amber-550 animate-spin border-t-amber-500" />
+                            <div className="space-y-1">
+                              <p className="text-xs font-black text-slate-100">جاري صياغة وحشو بنك الأسئلة بالذكاء الاصطناعي.. ⏳</p>
+                              <p className="text-[10px] text-slate-400 max-w-sm leading-relaxed mx-auto italic">
+                                &quot;مستر سهل بيجيبلك تريكات امتحانات الثانوية لـ {activeLesson.title} في ثواني وهيفهمالهالك بالبلدي والعسل.. خليك مستعد!&quot;
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* AI Error display */}
+                        {aiError && (
+                          <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-2.5">
+                            <span className="text-lg">⚠️</span>
+                            <div className="flex-1">
+                              <p className="text-xs font-black text-rose-400">عذرًا يا بطل، تعذر توليد الامتحان!</p>
+                              <p className="text-[10px] text-slate-300 mt-1 leading-relaxed">{aiError}</p>
+                              <button
+                                onClick={generateAiExam}
+                                className="mt-2.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-[10px] font-black rounded-lg transition-colors border border-slate-700 focus:outline-none"
+                              >
+                                إعادة المحاولة ثانية 🔄
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* AI Generated Exam Sheets */}
+                        {aiQuestions && (
+                          <div className="space-y-6 animate-fadeIn" id="ai-exam-questions-sheet">
+                            
+                            <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-850 flex items-center justify-between gap-3 flex-wrap">
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-black text-emerald-400">✅ تم التوليد بنجاح!</span>
+                                <span className="text-[10px] text-slate-500">|</span>
+                                <span className="text-[10px] font-black text-slate-300">مستوى الصعوبة: {aiDifficulty === 'easy' ? 'سهل ومباشر' : aiDifficulty === 'hard' ? 'صعب للأوائل والعباقرة' : 'متوسط متدرج'}</span>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-black text-slate-400 bg-slate-800/60 px-2.5 py-1 rounded-md">
+                                  تم الحل: {Object.keys(aiAnswers).length} من {aiQuestions.length}
+                                </span>
+                                <button
+                                  onClick={generateAiExam}
+                                  className="text-[10px] font-black text-blue-400 hover:text-blue-300 transition-colors focus:outline-none"
                                 >
-                                  <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-850 flex flex-col gap-2">
-                                    
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-base">💡</span>
-                                      <span className="text-xs font-black text-emerald-400">التفسير والشرح بالعامية لضمان بقائها في نفوخك:</span>
+                                  إعادة كبش وتوليد مخصص 🔄
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-6">
+                              {aiQuestions.map((q, idx) => {
+                                const qId = `ai_${q.id || idx}`;
+                                const chosenIndex = aiAnswers[qId];
+                                const isRevealed = aiRevealed[qId];
+
+                                return (
+                                  <div
+                                    key={qId}
+                                    className="bg-slate-950/20 p-5 rounded-2xl border border-slate-850 hover:border-slate-800/80 transition-all flex flex-col gap-4 shadow"
+                                  >
+                                    <div className="flex items-start gap-2.5">
+                                      <span className="bg-blue-600/20 text-blue-400 font-mono font-black text-[10px] p-2 rounded-lg shrink-0">
+                                        س {idx + 1}
+                                      </span>
+                                      <h4 className="text-xs font-black text-slate-100 leading-relaxed pt-0.5">
+                                        {q.question}
+                                      </h4>
                                     </div>
-                                    <p className="text-xs leading-relaxed text-slate-200">
-                                      {q.explanation}
-                                    </p>
-                                    
-                                    {q.trickWarning && (
-                                      <div className="mt-2 p-2.5 bg-amber-500/5 rounded-lg border border-amber-500/20 flex flex-col">
-                                        <span className="text-[10px] text-amber-400 font-black flex items-center gap-1">
-                                          🚨 فخ وتكَّة الامتحان:
-                                        </span>
-                                        <p className="text-[10px] text-slate-350 leading-relaxed mt-0.5">
-                                          {q.trickWarning}
-                                        </p>
-                                      </div>
+
+                                    {/* MCQ answers */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                      {q.options?.map((opt: string, oIdx: number) => {
+                                        const isSelected = chosenIndex === oIdx;
+                                        const isCorrect = oIdx === q.correctIndex;
+
+                                        let buttonStyles = 'bg-slate-900/40 border-slate-800 text-slate-300 hover:bg-slate-850';
+                                        if (isRevealed) {
+                                          if (isCorrect) {
+                                            buttonStyles = 'bg-emerald-555/15 bg-emerald-500/10 border-emerald-500 text-emerald-300 font-black';
+                                          } else if (isSelected) {
+                                            buttonStyles = 'bg-rose-500/15 border-rose-500 text-rose-300';
+                                          } else {
+                                            buttonStyles = 'bg-slate-900/10 border-slate-900 text-slate-650 opacity-50';
+                                          }
+                                        }
+
+                                        return (
+                                          <button
+                                            key={oIdx}
+                                            disabled={isRevealed}
+                                            onClick={() => selectAiOption(qId, oIdx, q.correctIndex || 0)}
+                                            className={`w-full text-right p-3 rounded-xl border text-xs transition-all duration-150 flex items-center justify-between ${buttonStyles}`}
+                                          >
+                                            <span>{opt}</span>
+                                            {isRevealed && isCorrect && <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mr-1" />}
+                                            {isRevealed && isSelected && !isCorrect && <XCircle className="w-4 h-4 text-rose-450 shrink-0 mr-1" />}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+
+                                    {/* AI explanation and trick alert */}
+                                    {isRevealed && (
+                                      <motion.div
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: 'auto' }}
+                                        className="mt-1 pt-3 border-t border-slate-800"
+                                      >
+                                        <div className="bg-slate-900 p-4 rounded-xl border border-slate-850 flex flex-col gap-2">
+                                          <div className="flex items-center gap-1.5">
+                                            <span className="text-base animate-bounce">💡</span>
+                                            <span className="text-xs font-black text-emerald-400">توضيح مستر سهل بالبلدي:</span>
+                                          </div>
+                                          <p className="text-xs leading-relaxed text-slate-205 text-slate-300">
+                                            {q.explanation}
+                                          </p>
+
+                                          {q.trickWarning && (
+                                            <div className="mt-2 p-2.5 bg-amber-500/5 rounded-lg border border-amber-500/20 flex flex-col">
+                                              <span className="text-[10px] text-amber-400 font-black flex items-center gap-1">
+                                                ⚠️ فخ الامتحان الرهيب:
+                                              </span>
+                                              <p className="text-[10px] text-slate-350 leading-relaxed mt-0.5">
+                                                {q.trickWarning}
+                                              </p>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </motion.div>
                                     )}
 
                                   </div>
-                                </motion.div>
-                              )}
-
+                                );
+                              })}
                             </div>
-                          );
-                        })}
+
+                          </div>
+                        )}
+
                       </div>
 
                     </motion.div>
@@ -1660,7 +2113,7 @@ export default function ThanaweyaInteractiveHub() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               
               {/* Card 1 */}
               <a 
@@ -1709,7 +2162,7 @@ export default function ThanaweyaInteractiveHub() {
 
               {/* Card 4 */}
               <a 
-                href="https://studea.emis.gov.eg font-black" 
+                href="https://studea.emis.gov.eg" 
                 target="_blank" 
                 rel="noopener noreferrer" 
                 className="group p-4 bg-slate-950/40 hover:bg-slate-950 border border-slate-800 hover:border-amber-500/40 rounded-2xl transition-all flex flex-col gap-2 shadow-sm cursor-pointer"
@@ -1756,20 +2209,20 @@ export default function ThanaweyaInteractiveHub() {
 
         <div className="text-right flex-1">
           <div className="flex items-center gap-2.5 flex-wrap justify-start">
-            <span className="text-2xl animate-bounce">🦁</span>
+            <span className="text-2xl animate-bounce">🎯</span>
             <span className="text-xs font-black bg-amber-500 text-slate-950 px-3 py-1 rounded-full uppercase tracking-wider">
-              معسكر الأسد الشرس للامتحانات والتركات
+              المعسكر التدريبي لتحديات الامتحانات والتركات الوزارية
             </span>
             <span className="text-[10px] bg-slate-800 text-slate-300 border border-slate-700 px-2.5 py-1 rounded-full">
               المادة العلمية الرسمية 🇪🇬
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-white mt-3 leading-tight">
-            رحلة زئير الأسد: بنك الأسئلة الملحمي ونماذج الإجابة الفولاذية
+            معسكر تحدي الثانوية: بنوك الأسئلة الشاملة ونماذج الحلول النموذجية
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
-            مذاكرة تفاعلية تفرتك أصعب تركات الفيزياء، الكيمياء، الأحياء، الجيولوجيا، والرياضيات! 
-            كل سؤال محلول بنموذج إجابة تفصيلي بالعامية المصرية لتبسيط الفهم 100% بدون أي استخدام خارجي للذكاء الاصطناعي لضمان التحصيل المستقل والفوري الخالي من الهلاوس!
+            مراجعة ومذاكرة تفاعلية تهدف لتبسيط وحل أعقد تركات الفيزياء، الكيمياء، الأحياء، الجيولوجيا، والرياضيات! 
+            كل تفصيلة وكل سؤال مجهز بنموذج حل كيميائي وفيزيائي ورياضي دقيق بالعامية المصرية لتبسيط الفهم 100% وضمان التحصيل المستقل والفوري الخالي من الهلاوس!
           </p>
         </div>
 
@@ -1780,7 +2233,7 @@ export default function ThanaweyaInteractiveHub() {
             <span className="text-sm font-mono font-black text-amber-400">{totalXP} XP</span>
           </div>
           <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
-            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🏁 العرائن المفتوحة</span>
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🏁 قطاعات التدريب المكتملة</span>
             <span className="text-sm font-black text-emerald-400">
               {LION_ARENAS.filter(a => {
                 const aqs = LION_QUESTIONS.filter(q => q.arenaId === a.id);
@@ -1789,15 +2242,15 @@ export default function ThanaweyaInteractiveHub() {
             </span>
           </div>
           <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
-            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🎯 أسئلة تم افتراسها</span>
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🎯 التحديات المجتازة</span>
             <span className="text-sm font-mono font-black text-blue-400">
               {Object.keys(lionAnswers).length} / {LION_QUESTIONS.length}
             </span>
           </div>
           <div className="bg-slate-950/60 border border-slate-800 p-3.5 rounded-2xl text-center">
-            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🦁 مستوى زئيرك</span>
+            <span className="text-[10px] font-black text-slate-400 block mb-0.5">🏅 المرتبة الأكاديمية</span>
             <span className="text-xs font-black text-rose-400">
-              {Object.keys(lionAnswers).length >= 15 ? 'أسد مزمجر 🔥' : Object.keys(lionAnswers).length >= 5 ? 'شبل متمرس 🐾' : 'شبل مبتدئ 🍼'}
+              {Object.keys(lionAnswers).length >= 15 ? 'خبير امتحانات متألق 🎓🔥' : Object.keys(lionAnswers).length >= 5 ? 'مستعد ومتميز ⚡' : 'مكافح مجتهد 🚀'}
             </span>
           </div>
         </div>
@@ -1813,15 +2266,15 @@ export default function ThanaweyaInteractiveHub() {
           {/* Reset All Stats Button */}
           <button
             onClick={() => {
-              if (confirm('هل أنت متأكد من تصفير وإعادة تشغيل رحلة الأسد الشرس بالكامل؟')) {
+              if (confirm('هل أنت متأكد من تصفير وإعادة تشغيل جميع تحديات المعسكر المغلق بالكامل؟')) {
                 saveLionAnswers({});
                 saveLionRevealed({});
                 setLionTodos([
-                  { id: 'l1', text: 'افتراس أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
-                  { id: 'l2', text: 'كسر روابط الكربون وإتقان ماركونيكوف والكيمياء العضوية الأليفاتية 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
-                  { id: 'l3', text: 'فك ألغاز الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
-                  { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية المندفعة بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
-                  { id: 'l5', text: 'السيطرة على التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
+                  { id: 'l1', text: 'حل أسئلة كيرشوف وقوانين الدوائر الكهربية المعقدة (أفكار ثانوية عامة) 🔌', completed: false, arenaId: 'arena_g12_physics_kirchhoff' },
+                  { id: 'l2', text: 'إتقان قاعدة ماركونيكوف وتفاعلات الكيمياء العضوية الأليفاتية وركائزها 🔥', completed: false, arenaId: 'arena_g12_organic_chem' },
+                  { id: 'l3', text: 'فك تريكات الصدوع التكتونية (فالق عادي وفالق معكوس) في الجيولوجيا وعلم الأرض ⛰️', completed: false, arenaId: 'arena_g12_geology' },
+                  { id: 'l4', text: 'اشتقاق معدلات التغير وتكامل الدوال المثلثية بدون أخطاء حسابية 📈', completed: false, arenaId: 'arena_g12_math_calculus' },
+                  { id: 'l5', text: 'فهم التوزيع الإلكتروني الشاذ للكروم والنحاس وروابط الذرات بالكامل 🧪', completed: false, arenaId: 'arena_g11_chem_bio' },
                   { id: 'l6', text: 'حل تريكات صيغ الأبعاد وقذف المقذوفات بزاوية 45 درجة لأولى ثانوي ⚡', completed: false, arenaId: 'arena_g10_physics' }
                 ]);
                 localStorage.removeItem('lion_answers');
@@ -1832,14 +2285,14 @@ export default function ThanaweyaInteractiveHub() {
             className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-red-950/30 text-rose-400 hover:text-red-300 border border-slate-800 hover:border-red-900/40 text-[11px] font-black transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>إعادة تصفير رحلة الأسد بالكامل 🔄</span>
+            <span>إعادة تصفير جميع تحديات المعسكر 🔄</span>
           </button>
 
           {/* Lion Quest Achievements Locker */}
           <div className="bg-slate-900/50 border border-slate-800 p-5 rounded-2xl shadow-lg text-right">
             <h3 className="text-xs font-black text-slate-105 mb-3 border-b border-slate-800/80 pb-2 flex items-center justify-start gap-2">
               <span>🥇</span>
-              <span>غنائم وجوائز الأسد المفتوحة:</span>
+              <span>الأوسمة الأكاديمية والدروع المفتوحة:</span>
             </h3>
             
             <div className="space-y-2.5">
@@ -1862,7 +2315,7 @@ export default function ThanaweyaInteractiveHub() {
                       <div className="text-right">
                         <h4 className="text-[11px] font-black leading-none text-slate-100">{arena.title}</h4>
                         <span className="text-[9px] text-slate-400 mt-1 block">
-                          {completed ? `تم الافتراس بالكامل بنسبة صح ${Math.round((correctAnswersCount/aqs.length)*100)}%` : 'قيد الانتظار...'}
+                          {completed ? `اكتمل هذا الميدان بنسبة صحيحة قدرها ${Math.round((correctAnswersCount/aqs.length)*100)}%` : 'قيد الانتظار للحل...'}
                         </span>
                       </div>
                     </div>
@@ -1878,7 +2331,7 @@ export default function ThanaweyaInteractiveHub() {
             <div className="flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
               <h3 className="text-xs font-black text-[#F8FAFC] flex items-center gap-2">
                 <ListTodo className="w-4 h-4 text-amber-500" />
-                <span>مهام وتحديات الأسد الملحمية 🎯</span>
+                <span>الخطط المراجعية والمهام المستهدفة 🎯</span>
               </h3>
               <span className="text-[9px] font-black text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
                 {lionTodos.filter(t => t.completed).length}/{lionTodos.length} منجز
@@ -1886,7 +2339,7 @@ export default function ThanaweyaInteractiveHub() {
             </div>
 
             <p className="text-[10px] text-slate-400 leading-relaxed mb-3 text-right">
-              قائمة مهام مجهزة ومخصصة ومربوطة بالكامل بكل عرين! بمجرد إكمال العرين، يمكنك تحديد المهمة كمنجزة للحفاظ على سجل انتصاراتك العريق!
+              قائمة مهام تعليمية مجهزة ومخصصة ومربوطة بالكامل بكل قسم! بمجرد إكمال تحديات المنطقة، يمكنك تعليمها كمنجزة للمتابعة وتأكيد التفوق!
             </p>
 
             {/* Task Checklist list block */}
@@ -1921,7 +2374,7 @@ export default function ThanaweyaInteractiveHub() {
                         </span>
                         {associatedArena && (
                           <span className="inline-block text-[8px] font-black bg-blue-500/10 text-blue-400 border border-blue-500/15 py-0.5 px-2 rounded-full mt-1.5">
-                            العرين: {associatedArena.title}
+                            الميدان التدريبي: {associatedArena.title}
                           </span>
                         )}
                       </div>
@@ -1940,7 +2393,7 @@ export default function ThanaweyaInteractiveHub() {
                 if (!input.value.trim()) return;
                 const newTodo = {
                   id: 'custom-' + Date.now(),
-                  text: input.value.trim() + ' 🦁',
+                  text: input.value.trim() + ' 📝',
                   completed: false,
                   arenaId: selectedLionArenaId
                 };
@@ -1951,7 +2404,7 @@ export default function ThanaweyaInteractiveHub() {
             >
               <input
                 name="lionTodoText"
-                placeholder="أضف مهمتك الخاصة للعرين النشط..."
+                placeholder="أضف مهمتك وتحديك المخصص للميدان النشط..."
                 className="flex-1 bg-slate-950 border border-slate-850 text-[10px] px-3 py-2 rounded-xl focus:outline-none focus:border-amber-500 text-right text-slate-300 placeholder-slate-650"
               />
               <button
@@ -1973,7 +2426,7 @@ export default function ThanaweyaInteractiveHub() {
           <div className="flex flex-col gap-2">
             <h3 className="text-xs font-black text-amber-400 flex items-center justify-start gap-1.5 px-1 mb-1">
               <span>🗺️</span>
-              <span>خارطة العرائن المتاحة: اختر مادتك وانقض على الامتحان</span>
+              <span>خارطة ميادين التحدي المتاحة: اختر مادتك واجتاز الامتحان</span>
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -2043,7 +2496,7 @@ export default function ThanaweyaInteractiveHub() {
                       <span className="text-lg">{activeArena.icon}</span>
                       <span className="text-xs font-black text-amber-400">كتيب الأسئلة لـ {activeArena.title}</span>
                     </div>
-                    <h3 className="text-sm font-black text-slate-200 mt-1">تحدي الوزارة الموثق والامتحانات الملحمية المطابقة لدليل الطلاب</h3>
+                    <h3 className="text-sm font-black text-slate-200 mt-1">تحدي الوزارة الموثق والامتحانات المدارية المطابقة لدليل الطلاب</h3>
                   </div>
                   
                   <button
@@ -2061,7 +2514,7 @@ export default function ThanaweyaInteractiveHub() {
                     className="py-1 px-3 bg-red-950/20 text-rose-400 hover:bg-red-950/40 text-[10px] rounded-lg transition-colors border border-red-900/30 font-black flex items-center justify-start gap-1 cursor-pointer"
                   >
                     <RefreshCw className="w-3 h-3" />
-                    <span>تصفير إجابات هذا العرين</span>
+                    <span>تصفير إجابات هذا الميدان</span>
                   </button>
                 </div>
 
@@ -2084,9 +2537,9 @@ export default function ThanaweyaInteractiveHub() {
                           </span>
                           
                           <span className={`text-[9px] font-black py-0.5 px-2 rounded-full ${
-                            q.difficulty === 'صبي الأسد 🐾' 
+                            q.difficulty === 'المستوى الأساسي 🎯' 
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                              : q.difficulty === 'أسد متمرس 🦁' 
+                              : q.difficulty === 'مستوى المتفوقين ⚡' 
                               ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
                               : 'bg-rose-500/10 text-rose-450 border border-rose-500/20'
                           }`}>

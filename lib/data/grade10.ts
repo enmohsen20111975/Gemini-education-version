@@ -37,6 +37,8 @@ export const grade10Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي دقة جهاز الورنية والميكرومتر بالمليمتر',
                       infographicType: 'momentum_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Vernier_caliper_detail.jpg/640px-Vernier_caliper_detail.jpg',
+                      imageCaption: 'شرح تفصيلي لدقة جهاز الورنية ذات الورنية ومكوناته الأساسية (السلم الرئيسي الثابت ومؤشر الورنية المنزلق) لتحديد القياس الدقيق لقطر الأجسام الكروية والأسطوانية الكسرية بالمليمتر.',
                       questions: [
                         {
                           id: 101,
@@ -80,6 +82,8 @@ export const grade10Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي القوة الدائرية والهروب المماسي للأجسام',
                       infographicType: 'momentum_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Centripetal_force_diagram.svg/600px-Centripetal_force_diagram.svg.png',
+                      imageCaption: 'مخطط القوة الجاذبة المركزية (Centripetal Force) الموجهة دائمًا بزاوية عمودية باتجاه مركز المدار الدائري، مسببة تغيير اتجاه سرعة الجسم المماسية دون الإخلال بمقدارها العددي.',
                       questions: [
                         {
                           id: 102,
@@ -127,10 +131,12 @@ export const grade10Data: AcademicYear = {
                       deepExplanation: [
                         'السكريات الأحادية (Monosaccharides) هي أبسط أشكال الكربوهيدرات، وتتكون من جزيء واحد من الكربون يتراوح عدده من ٣ إلى ٦ ذرات (زي الجلوكوز سكر العنب، والفركتوز سكر الفواكه، والجالاكتوز، والريبوز سكر الحمض النووي RNA).',
                         'السكريات الثنائية بتنتج من اتحاد جزيئين أحاديين مع إخراج جزيء مياه (H2O)، زي السكروز (سكر القصب: جلوكوز + فركتوز)، واللاكتوز (سكر اللبن: جلوكوز + جالاكتوز)، والمالتوز (سكر الشعير: جلوكوز + جلوكوز).',
-                        'الكواشف الكيميائية مهمة جداً ومضمونة في امتحانات الثانوية كعملي ونظري! بنكشف عن السكر الأحادي بكاشف بندكت الأزرق اللي بيتحول لوجود الجلوكوز للون البرتقالي اللذيذ عند التسخين المعتدل في حمام مائي.'
+                        'الكواشف الكيميائية مهمة جداً ومضمونة in امتحانات الثانوية كعملي ونظري! بنكشف عن السكر الأحادي بكاشف بندكت الأزرق اللي بيتحول لوجود الجلوكوز للون البرتقالي اللذيذ عند التسخين المعتدل في حمام مائي.'
                       ],
                       infographicTitle: 'محاكي تفاعل خلايا النبات وسكريات الكربوهيدرات',
                       infographicType: 'cellular_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Alpha-D-Glucopyranose.svg/500px-Alpha-D-Glucopyranose.svg.png',
+                      imageCaption: 'الصيغة البنائية لجزئ الجلوكوز الأحادي (سكر سداسي الكربون الدائري)، وهو المونومر الرئيسي المشكل بوليمرات النشا الفاخرة والجليكوجين المخزن في كبد وعضلات الحيوان.',
                       questions: [
                         {
                           id: 111,
@@ -174,6 +180,8 @@ export const grade10Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي انقسام صبغيات وكروموسومات الخلايا الوراثية',
                       infographicType: 'cellular_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Punnett_square_mendel_flowers.svg/600px-Punnett_square_mendel_flowers.svg.png',
+                      imageCaption: 'مربع بانيت الوراثي ومحاكاة تزاوج جيل نباتات البازلاء لشرح قانون مندل حيث تتدفق الجينات وتظهر الصفة القرمزية السائدة والبيضاء المتنحية بنسبة (٣ سائد : ١ متنحي) في الجيل الثاني.',
                       questions: [
                         {
                           id: 112,
@@ -225,6 +233,8 @@ export const grade10Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي تفاعلات الاتزان والتوصيل وصيغ الـ pH الكيميائية للتعادل',
                       infographicType: 'chemical_equilibrium',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/PH_scale_2.svg/800px-PH_scale_2.svg.png',
+                      imageCaption: 'مخطط الأس الهيدروجيني الكيميائي (pH Scale) وتطبيقاته في المعمل لتصنيف درجة حموضة وقاعدية السوائل والمحاليل المائية بمدى يتراوح من الصفر الحامض الحاد للمعدة والبطاريات وحتى الأربعة عشر للأمونيا والمنظفات القلوية القوية.',
                       questions: [
                         {
                           id: 121,
@@ -269,6 +279,8 @@ export const grade10Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي تفاعلات الحجوم الكيميائية والضغط وثابت أفوجادرو الحجمي',
                       infographicType: 'chemical_equilibrium',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Mole_concept.svg/500px-Mole_concept.svg.png',
+                      imageCaption: 'منشور توضيحي علمي لتعريف "المول" كعلاقة وسطية تدمج بين كتل العناصر والذرات المقاسة بالميزان بالجرام، وبين كم الكتل الجسيمية الحرة اللامحدودة بمقدار ثابت أفوجادرو، وحجوم الغاز القياسية باللتر في الـ (STP).',
                       questions: [
                         {
                           id: 122,

@@ -29,6 +29,8 @@ export interface Lesson {
   infographicTitle: string;
   infographicType: InfographicType;
   questions: Question[];
+  imageUrl?: string; // Sourced educational diagram/illustration URL
+  imageCaption?: string; // Egyptian colloquial description of the scientific diagram
 }
 
 export interface Chapter {

@@ -37,6 +37,8 @@ export const grade11Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي هندسة البندول والتردد والطاقات التفاعلي',
                       infographicType: 'momentum_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Simple_pendulum_diagram.svg/600px-Simple_pendulum_diagram.svg.png',
+                      imageCaption: 'مخطط فيزيائي لحركة البندول البسيط (Simple Pendulum) لتوضيح سعة الاهتزازة (A) ومفهوم تحول الطاقة المستمر من طاقة حركة عظمى عند موضع السكون إلى طاقة وضع عظمى عند أقصى إزاحة.',
                       questions: [
                         {
                           id: 201,
@@ -81,6 +83,8 @@ export const grade11Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي انسياب وسرعة الموائع في الأنابيب المختلفة',
                       infographicType: 'momentum_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Laminar_and_turbulent_flow_scheme.svg/600px-Laminar_and_turbulent_flow_scheme.svg.png',
+                      imageCaption: 'مخطط يقارن بين السريان الهادئ المستقر (Laminar Flow) اللي خطوط الانسياب فيه متوازية فوق بعض، والسريان المضطرب العنيف (Turbulent Flow) اللي فيه دوامات ملخبطة وسرعة عشوائية مبعثرة لجزئيات المائع.',
                       questions: [
                         {
                           id: 202,
@@ -132,6 +136,8 @@ export const grade11Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي بور وتوزيع مستويات الطاقة بالكم والسحب الإلكترونية',
                       infographicType: 'chemical_equilibrium',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/55/Bohr-atom-PAR.svg/600px-Bohr-atom-PAR.svg.png',
+                      imageCaption: 'طراز نيلز بور لذرة الهيدروجين (Bohr Atomic Model) ومستويات الطاقة السبعة الرئيسية، وتوضيح كيفية قفز الإلكترون من مدار لمدار لامتصاص وإشعاع طيف انبعاث خطي ملون.',
                       questions: [
                         {
                           id: 221,
@@ -176,6 +182,8 @@ export const grade11Data: AcademicYear = {
                       ],
                       infographicTitle: 'محاكي تباين حجوم الذرات ومستويات جهود التأين للرابط',
                       infographicType: 'chemical_equilibrium',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/Atomic_radius_periodic_table.svg/800px-Atomic_radius_periodic_table.svg.png',
+                      imageCaption: 'مخطط تدرج خاصية نصف قطر الذرة (Atomic Radius) وحجوم العناصر الكيميائية عبر مجموعات ودورات الجدول الدوري لتوضيح تغير شدة جاذبية النواة للإلكترونات الخارجية.',
                       questions: [
                         {
                           id: 222,
@@ -227,11 +235,13 @@ export const grade11Data: AcademicYear = {
                       analogy: 'تخيل إن عندك فيلا جميلة وبتقرر تبني فيها دور تالت من غير ما تسأل المهندس الإنشائي أو تراعي قوة الأعمدة.. البيت هيقع! التنمية الصح مش مجرد زيادة فلوس وخلاص.. لازم تراعي "الشمولية" يعني كل القطاعات تشارك، و"التكامل" عشان التعليم يخدم الصحة والصحة تخدم الصناعة، و"الاستدامة" عشان متخلصش الغاز والبترول والمياه والجيل اللي بعدك ملقيش لقمة عيش يعيش عليها!',
                       coreConcept: 'دراسة الجهود المنظمة التي تبذلها الدول لتنسيق واستغلال الإمكانيات البشرية والطبيعية لتحقيق أعلى مستويات الرفاهية والعدالة الاجتماعية مع حفظ البيئة.',
                       deepExplanation: [
-                        'مفهوم التنمية تاريخياً بدأ بالتنمية الاقتصادية (استغلال فظ للموارد)، ثم تطور للتنمية البشرية (الاهتمام بقدرات وصحة الفرد والتعليم)، ووصل لأخطر صيغة حالية "التنمية المستدامة" (Sustainable Development) التي تهدف لتلبية احتياجات الحاضر دون الإضرار بقدرة الأجيال القادمة على تلبية احتياجاتهم.',
+                        'مفهوم التنمية تاريخياً بدأ بالتنمية الاقتصادية (استغلال فظ للموارد)، ثم تطور للتنمية البشرية (الاهتمام بقدرات وصحة الفرد والتعليم)، ووصل لأخطر صيغة حالية "التنمية مستدامة" (Sustainable Development) التي تهدف لتلبية احتياجات الحاضر دون الإضرار بقدرة الأجيال القادمة على تلبية احتياجاتهم.',
                         'مبادئ التنمية تلاتة مشهورين جداً في الامتحان: الشمولية (يعني يشارك فيها الحكومات والقطاع الخاص وكل طوائف المجتمع)، التكامل (يعني مفيش قطاع ينمو على حساب قطاع تاني، التنمية متكاملة ومتشابكة)، الاستدامة (موازنة استغلال الموارد وتجديدها لحماية كوكب الأرض).'
                       ],
                       infographicTitle: 'خرائط ومؤشرات ومستويات قياس التنمية المستدامة',
                       infographicType: 'osmosis_sim',
+                      imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Sustainable_development.svg/640px-Sustainable_development.svg.png',
+                      imageCaption: 'مخطط مبادئ وركائز التنمية المستدامة (Sustainable Development) والتقاطعات الثنائية والكلية المتوازنة للأبعاد البيئية والاجتماعية والاقتصادية الأساسية.',
                       questions: [
                         {
                           id: 211,
